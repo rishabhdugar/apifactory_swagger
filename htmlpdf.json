@@ -1,0 +1,256 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Image and PDF Generation API",
+    "description": "API for generating images and PDFs from URLs or HTML content",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:5000",
+      "description": "Local Development Server"
+    },
+    {
+      "url": "https://pdfmunk.com/api",
+      "description": "Production Server"
+    }
+  ],
+  "paths": {
+    "/v1/generateImage": {
+      "post": {
+        "summary": "Generate an image from a URL or HTML content",
+        "description": "Creates an image based on the provided URL or HTML content",
+        "operationId": "generateImage",
+        "tags": [
+          "Image Generation"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/UrlImageRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/HtmlImageRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Image generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/UrlResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/Base64Response"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BothResponse"
+                    }
+                  ]
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/generatePdf": {
+      "post": {
+        "summary": "Generate PDF from URL or HTML content",
+        "description": "Converts a URL or HTML/CSS content to a PDF file with customizable options. PDFs are temporarily stored for 30 days.",
+        "operationId": "generatePdf",
+        "tags": [
+          "PDF Generation"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "PDF generation parameters",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/UrlToPdfRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/HtmlToPdfRequest"
+                  }
+                ]
+              },
+              "examples": {
+                "URL conversion": {
+                  "value": {
+                    "url": "https://google.com",
+                    "paper_size": "A4",
+                    "landscape": false,
+                    "displayHeaderFooter": false,
+                    "page_size": 5,
+                    "printBackground": true
+                  }
+                },
+                "HTML conversion": {
+                  "value": {
+                    "html_content": "<html><body><h1>Hello World</h1></body></html>",
+                    "css_content": "h1 { color: blue; }",
+                    "paper_size": "A4",
+                    "page_size": 2
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                },
+                "example": {
+                  "file_deletion_date": "2025-04-28",
+                  "file_size_bytes": 188321,
+                  "pages": 5,
+                  "pdf_url": "https://example.com/generated.pdf",
+                  "success": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "No input": {
+                    "value": {
+                      "error": "No input provided",
+                      "success": false
+                    }
+                  },
+                  "Invalid page_size": {
+                    "value": {
+                      "error": "Maximum allowed page_size is 20",
+                      "success": false
+                    }
+                  },
+                  "Missing required data": {
+                    "value": {
+                      "error": "No URL or HTML content provided",
+                      "success": false
+                    }
+                  },
+                  "File too large": {
+                    "value": {
+                      "error": "Generated PDF exceeds maximum size of 3MB",
+                      "success": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid API key",
+                  "success": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "General error": {
+                    "value": {
+                      "error": "An unexpected error occurred",
+                      "success": false
+                    }
+                  },
+                  "Upload failure": {
+                    "value": {
+                      "error": "Failed to upload PDF to storage",
+                      "success": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
