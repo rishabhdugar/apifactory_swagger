@@ -1,469 +1,255 @@
-openapi: 3.0.0
-info:
-  title: Image and PDF Generation API
-  description: API for generating images and PDFs from URLs or HTML content
-  version: 1.0.0
-servers:
-  - url: http://127.0.0.1:5000
-    description: Local Development Server
-  - url: https://pdfmunk.com/api
-    description: Production Server
-paths:
-  /v1/generateImage:
-    post:
-      summary: Generate an image from a URL or HTML content
-      description: Creates an image based on the provided URL or HTML content
-      operationId: generateImage
-      tags:
-        - Image Generation
-      security:
-        - ApiKeyAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - $ref: '#/components/schemas/UrlImageRequest'
-                - $ref: '#/components/schemas/HtmlImageRequest'
-      responses:
-        '200':
-          description: Image generated successfully
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/UrlResponse'
-                  - $ref: '#/components/schemas/Base64Response'
-                  - $ref: '#/components/schemas/BothResponse'
-            image/png:
-              schema:
-                type: string
-                format: binary
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /v1/generatePdf:
-    post:
-      summary: Generate PDF from URL or HTML content
-      description: Converts a URL or HTML/CSS content to a PDF file with customizable options. PDFs are temporarily stored for 30 days.
-      operationId: generatePdf
-      tags:
-        - PDF Generation
-      security:
-        - ApiKeyAuth: []
-      requestBody:
-        description: PDF generation parameters
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - $ref: '#/components/schemas/UrlToPdfRequest'
-                - $ref: '#/components/schemas/HtmlToPdfRequest'
-            examples:
-              URL conversion:
-                value:
-                  url: https://google.com
-                  paper_size: A4
-                  landscape: false
-                  displayHeaderFooter: false
-                  page_size: 5
-                  printBackground: true
-              HTML conversion:
-                value:
-                  html_content: <html><body><h1>Hello World</h1></body></html>
-                  css_content: h1 { color: blue; }
-                  paper_size: A4
-                  page_size: 2
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-              example:
-                file_deletion_date: '2025-04-28'
-                file_size_bytes: 188321
-                pages: 5
-                pdf_url: https://example.com/generated.pdf
-                success: true
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                No input:
-                  value:
-                    error: No input provided
-                    success: false
-                Invalid page_size:
-                  value:
-                    error: Maximum allowed page_size is 20
-                    success: false
-                Missing required data:
-                  value:
-                    error: No URL or HTML content provided
-                    success: false
-                File too large:
-                  value:
-                    error: Generated PDF exceeds maximum size of 3MB
-                    success: false
-        '401':
-          description: Unauthorized - Invalid API key
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error: Invalid API key
-                success: false
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                General error:
-                  value:
-                    error: An unexpected error occurred
-                    success: false
-                Upload failure:
-                  value:
-                    error: Failed to upload PDF to storage
-                    success: false
-components:
-  securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: CLIENT-API-KEY
-      description: API key for authentication
-  schemas:
-    UrlImageRequest:
-      type: object
-      required:
-        - source_type
-        - url
-      properties:
-        source_type:
-          type: string
-          enum:
-            - url
-          description: Type of source for image generation
-          default: url
-        url:
-          type: string
-          description: URL from which to generate an image
-        width:
-          type: integer
-          description: Width of the output image in pixels
-          default: 1280
-        height:
-          type: integer
-          description: Height of the output image in pixels
-          default: 720
-        device_scale_factor:
-          type: number
-          description: Scale factor for the device rendering
-          default: 1
-        quality:
-          type: integer
-          description: Quality of the output image
-          minimum: 30
-          maximum: 100
-          default: 80
-        full_page:
-          type: boolean
-          description: Whether to capture the full page
-          default: false
-        wait_till:
-          type: integer
-          description: Time to wait in seconds before taking screenshot
-          default: 0
-        viewport_width:
-          type: integer
-          description: Width of the viewport in pixels
-        viewport_height:
-          type: integer
-          description: Height of the viewport in pixels
-        response_format:
-          type: string
-          enum:
-            - url
-            - base64
-            - both
-            - image
-          description: Format of the response
-          default: url
-    HtmlImageRequest:
-      type: object
-      required:
-        - source_type
-        - html_content
-      properties:
-        source_type:
-          type: string
-          enum:
-            - html
-          description: Type of source for image generation
-        html_content:
-          type: string
-          description: HTML content to render as an image
-        css_content:
-          type: string
-          description: CSS content to style the HTML
-        width:
-          type: integer
-          description: Width of the output image in pixels
-          default: 1280
-        height:
-          type: integer
-          description: Height of the output image in pixels
-          default: 720
-        device_scale_factor:
-          type: number
-          description: Scale factor for the device rendering
-          default: 1
-        quality:
-          type: integer
-          description: Quality of the output image
-          minimum: 30
-          maximum: 100
-          default: 80
-        font:
-          type: string
-          description: Fonts to use, separated by '|'
-        response_format:
-          type: string
-          enum:
-            - url
-            - base64
-            - both
-            - image
-          description: Format of the response
-          default: url
-    UrlResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          description: Whether the request was successful
-        file_size_bytes:
-          type: integer
-          description: Size of the generated image in bytes
-        image_url:
-          type: string
-          description: URL to the generated image
-        file_deletion_date:
-          type: string
-          format: date
-          description: Date when the file will be deleted
-    Base64Response:
-      type: object
-      properties:
-        success:
-          type: boolean
-          description: Whether the request was successful
-        file_size_bytes:
-          type: integer
-          description: Size of the generated image in bytes
-        image_base64:
-          type: string
-          description: Base64 encoded image data
-    BothResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          description: Whether the request was successful
-        file_size_bytes:
-          type: integer
-          description: Size of the generated image in bytes
-        image_url:
-          type: string
-          description: URL to the generated image
-        file_deletion_date:
-          type: string
-          format: date
-          description: Date when the file will be deleted
-        image_base64:
-          type: string
-          description: Base64 encoded image data
-    ErrorResponse:
-      type: object
-      properties:
-        error:
-          type: string
-          description: Error message
-        success:
-          type: boolean
-          description: Always false in case of error
-    UrlToPdfRequest:
-      type: object
-      required:
-        - url
-      properties:
-        url:
-          type: string
-          description: The URL to convert to PDF
-          example: https://google.com
-        paper_size:
-          type: string
-          description: Paper size for the PDF
-          default: A4
-          enum:
-            - A4
-            - A3
-            - Letter
-            - Legal
-            - Tabloid
-          example: A4
-        landscape:
-          type: boolean
-          description: Whether to use landscape orientation
-          default: false
-          example: false
-        displayHeaderFooter:
-          type: boolean
-          description: Whether to display header and footer
-          default: false
-          example: false
-        printBackground:
-          type: boolean
-          description: Whether to print background graphics
-          default: true
-          example: true
-        preferCSSPageSize:
-          type: boolean
-          description: Whether to prefer page size defined in CSS
-          default: true
-          example: true
-        page_size:
-          type: integer
-          description: Maximum number of pages to convert (max 20)
-          default: 20
-          minimum: 1
-          maximum: 20
-          example: 5
-        wait_till:
-          type: integer
-          description: Time to wait in seconds before capturing the page
-          default: 0
-          example: 0
-        paperWidth:
-          type: integer
-          description: Custom paper width in pixels (if not using standard paper_size)
-          example: 800
-        paperHeight:
-          type: integer
-          description: Custom paper height in pixels (if not using standard paper_size)
-          example: 1200
-    HtmlToPdfRequest:
-      type: object
-      required:
-        - html_content
-      properties:
-        html_content:
-          type: string
-          description: HTML content to convert to PDF
-          example: <html><body><h1>Hello World</h1><p>This is a test.</p></body></html>
-        css_content:
-          type: string
-          description: CSS content to style the HTML
-          default: ''
-          example: h1 { color: blue; } p { font-size: 16px; }
-        paper_size:
-          type: string
-          description: Paper size for the PDF
-          default: A4
-          enum:
-            - A4
-            - A3
-            - Letter
-            - Legal
-            - Tabloid
-          example: A4
-        landscape:
-          type: boolean
-          description: Whether to use landscape orientation
-          default: false
-          example: false
-        displayHeaderFooter:
-          type: boolean
-          description: Whether to display header and footer
-          default: false
-          example: false
-        printBackground:
-          type: boolean
-          description: Whether to print background graphics
-          default: true
-          example: true
-        preferCSSPageSize:
-          type: boolean
-          description: Whether to prefer page size defined in CSS
-          default: true
-          example: true
-        page_size:
-          type: integer
-          description: Maximum number of pages to convert (max 20)
-          default: 20
-          minimum: 1
-          maximum: 20
-          example: 5
-        paperWidth:
-          type: integer
-          description: Custom paper width in pixels (if not using standard paper_size)
-          example: 800
-        paperHeight:
-          type: integer
-          description: Custom paper height in pixels (if not using standard paper_size)
-          example: 1200
-    SuccessResponse:
-      type: object
-      properties:
-        pdf_url:
-          type: string
-          description: URL to access the generated PDF
-          example: https://example.com/generated.pdf
-        success:
-          type: boolean
-          description: Whether the operation was successful
-          example: true
-        file_size_bytes:
-          type: integer
-          description: Size of the generated PDF in bytes
-          example: 188321
-        pages:
-          type: integer
-          description: Number of pages in the generated PDF
-          example: 5
-        file_deletion_date:
-          type: string
-          format: date
-          description: Date when the file will be automatically deleted (30 days from creation)
-          example: '2025-04-28'
-  tags:
-    - name: Image Generation
-      description: Operations related to Image generation
-    - name: PDF Generation
-      description: Operations related to PDF generation
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Image and PDF Generation API",
+    "description": "API for generating images and PDFs from URLs or HTML content",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:5000",
+      "description": "Local Development Server"
+    },
+    {
+      "url": "https://pdfmunk.com/api",
+      "description": "Production Server"
+    }
+  ],
+  "paths": {
+    "/v1/generateImage": {
+      "post": {
+        "summary": "Generate an image from a URL or HTML content",
+        "description": "Creates an image based on the provided URL or HTML content",
+        "operationId": "generateImage",
+        "tags": [
+          "Image Generation"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/UrlImageRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/HtmlImageRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Image generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/UrlResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/Base64Response"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BothResponse"
+                    }
+                  ]
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/generatePdf": {
+      "post": {
+        "summary": "Generate PDF from URL or HTML content",
+        "description": "Converts a URL or HTML/CSS content to a PDF file with customizable options. PDFs are temporarily stored for 30 days.",
+        "operationId": "generatePdf",
+        "tags": [
+          "PDF Generation"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "PDF generation parameters",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/UrlToPdfRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/HtmlToPdfRequest"
+                  }
+                ]
+              },
+              "examples": {
+                "URL conversion": {
+                  "value": {
+                    "url": "https://google.com",
+                    "paper_size": "A4",
+                    "landscape": false,
+                    "displayHeaderFooter": false,
+                    "page_size": 5,
+                    "printBackground": true
+                  }
+                },
+                "HTML conversion": {
+                  "value": {
+                    "html_content": "<html><body><h1>Hello World</h1></body></html>",
+                    "css_content": "h1 { color: blue; }",
+                    "paper_size": "A4",
+                    "page_size": 2
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                },
+                "example": {
+                  "file_deletion_date": "2025-04-28",
+                  "file_size_bytes": 188321,
+                  "pages": 5,
+                  "pdf_url": "https://example.com/generated.pdf",
+                  "success": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "No input": {
+                    "value": {
+                      "error": "No input provided",
+                      "success": false
+                    }
+                  },
+                  "Invalid page_size": {
+                    "value": {
+                      "error": "Maximum allowed page_size is 20",
+                      "success": false
+                    }
+                  },
+                  "Missing required data": {
+                    "value": {
+                      "error": "No URL or HTML content provided",
+                      "success": false
+                    }
+                  },
+                  "File too large": {
+                    "value": {
+                      "error": "Generated PDF exceeds maximum size of 3MB",
+                      "success": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid API key",
+                  "success": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "General error": {
+                    "value": {
+                      "error": "An unexpected error occurred",
+                      "success": false
+                    }
+                  },
+                  "Upload failure": {
+                    "value": {
+                      "error": "Failed to upload PDF to storage",
+                      "success": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
