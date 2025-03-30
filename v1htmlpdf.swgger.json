@@ -9,7 +9,7 @@
     {
       "url": "https://pdfmunk.com/api",
       "description": "Production Server"
-    },    
+    },
     {
       "url": "http://127.0.0.1:5000",
       "description": "Local Development Server"
@@ -251,6 +251,34 @@
           }
         }
       }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Checks the health of the API",
+        "operationId": "healthCheck",
+        "tags": [
+          "Health Check"
+        ],
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -280,7 +308,8 @@
           },
           "url": {
             "type": "string",
-            "description": "URL from which to generate an image"
+            "description": "URL from which to generate an image",
+            "default": "https://google.com"
           },
           "width": {
             "type": "integer",
@@ -316,11 +345,13 @@
           },
           "viewport_width": {
             "type": "integer",
-            "description": "Width of the viewport in pixels"
+            "description": "Width of the viewport in pixels",
+            "default": 1920
           },
           "viewport_height": {
             "type": "integer",
-            "description": "Height of the viewport in pixels"
+            "description": "Height of the viewport in pixels",
+            "default": 1080
           },
           "response_format": {
             "type": "string",
@@ -663,6 +694,10 @@
     {
       "name": "PDF Generation",
       "description": "Operations related to PDF generation"
+    },
+    {
+      "name": "Health Check",
+      "description": "API health check"
     }
   ]
 }
