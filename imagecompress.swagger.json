@@ -1,0 +1,184 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Image Compression API",
+    "description": "API for compressing images. Supports URL and base64 input, and URL or base64 output.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://pdfmunk.com/api/v1/compress"
+    }
+  ],
+  "paths": {
+    "/": {
+      "post": {
+        "summary": "Compress an image",
+        "description": "Compresses an image from a URL or base64 input.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "image_url": {
+                        "type": "string",
+                        "description": "URL of the image to compress.",
+                        "example": "https://images.squarespace-cdn.com/content/v1/51142d0be4b067782b66f751/1443215472429-OGX4F08A16BV9HEZJPHG/image-asset.jpeg?format=2500w"
+                      },
+                      "output_format": {
+                        "type": "string",
+                        "enum": [
+                          "url",
+                          "base64"
+                        ],
+                        "description": "Output format. 'url' for a URL, 'base64' for base64 encoded image.",
+                        "default": "url"
+                      },
+                      "quality": {
+                        "type": "integer",
+                        "description": "Image compression quality (1-100).",
+                        "default": 10
+                      }
+                    },
+                    "required": [
+                      "image_url"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "base64_image": {
+                        "type": "string",
+                        "description": "Base64 encoded image data.",
+                        "example": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEA..."
+                      },
+                      "output_format": {
+                        "type": "string",
+                        "enum": [
+                          "url",
+                          "base64"
+                        ],
+                        "description": "Output format. 'url' for a URL, 'base64' for base64 encoded image.",
+                        "default": "url"
+                      },
+                      "quality": {
+                        "type": "integer",
+                        "description": "Image compression quality (1-100).",
+                        "default": 10
+                      }
+                    },
+                    "required": [
+                      "base64_image"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful compression",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "compressed_image_url": {
+                      "type": "string",
+                      "description": "URL of the compressed image (if output_format is 'url')."
+                    },
+                    "compressed_base64_image": {
+                      "type": "string",
+                      "description": "Base64 encoded compressed image (if output_format is 'base64')."
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "description": "Indicates success."
+                    },
+                    "original_size_bytes": {
+                      "type": "integer",
+                      "description": "Original image size in bytes."
+                    },
+                    "compressed_size_bytes": {
+                      "type": "integer",
+                      "description": "Compressed image size in bytes."
+                    },
+                    "compressed_size_kb": {
+                      "type": "number",
+                      "format": "float",
+                      "description": "Compressed image size in kilobytes."
+                    },
+                    "compression_percentage": {
+                      "type": "number",
+                      "format": "float",
+                      "description": "Percentage of compression achieved."
+                    },
+                    "file_deletion_date":{
+                      "type": "string",
+                      "description": "Date when the file will be deleted."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "APIKeyHeader": {
+        "type": "apiKey",
+        "name": "CLIENT-API-KEY",
+        "in": "header"
+      }
+    }
+  }
+}
