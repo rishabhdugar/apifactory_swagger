@@ -42,6 +42,23 @@
                     "$ref": "#/components/schemas/HtmlImageRequest"
                   }
                 ]
+              },
+              "examples": {
+                "URL conversion": {
+                  "value": {
+                    "source_type": "url",
+                    "url": "https://pdfmunk.com"
+                  }
+                },
+                "HTML conversion": {
+                  "value": {
+                    "source_type": "html",
+                    "html_content": "<html><body><h1>Hello World</h1></body></html>",
+                    "css_content": "h1 { color: blue; }",
+                    "width": 800,
+                    "height": 600
+                  }
+                }
               }
             }
           }
@@ -137,7 +154,7 @@
               "examples": {
                 "URL conversion": {
                   "value": {
-                    "url": "https://google.com",
+                    "url": "https://pdfmunk.com",
                     "paper_size": "A4",
                     "landscape": false,
                     "displayHeaderFooter": false,
@@ -309,7 +326,7 @@
           "url": {
             "type": "string",
             "description": "URL from which to generate an image",
-            "default": "https://google.com"
+            "default": "https://pdfmunk.com"
           },
           "width": {
             "type": "integer",
@@ -514,7 +531,7 @@
           "url": {
             "type": "string",
             "description": "The URL to convert to PDF",
-            "example": "https://google.com"
+            "example": "https://pdfmunk.com"
           },
           "paper_size": {
             "type": "string",
