@@ -8,11 +8,7 @@
   "servers": [
     {
       "url": "https://pdfmunk.com/api",
-      "description": "Production Server"
-    },
-    {
-      "url": "http://127.0.0.1:5000",
-      "description": "Local Development Server"
+      "description": "PDFMUNK"
     }
   ],
   "paths": {
@@ -46,13 +42,11 @@
               "examples": {
                 "URL conversion": {
                   "value": {
-                    "source_type": "url",
                     "url": "https://pdfmunk.com"
                   }
                 },
                 "HTML conversion": {
                   "value": {
-                    "source_type": "html",
                     "html_content": "<html><body><h1>Hello World</h1></body></html>",
                     "css_content": "h1 { color: blue; }",
                     "width": 800,
@@ -311,18 +305,9 @@
       "UrlImageRequest": {
         "type": "object",
         "required": [
-          "source_type",
           "url"
         ],
         "properties": {
-          "source_type": {
-            "type": "string",
-            "enum": [
-              "url"
-            ],
-            "description": "Type of source for image generation",
-            "default": "url"
-          },
           "url": {
             "type": "string",
             "description": "URL from which to generate an image",
@@ -360,15 +345,15 @@
             "description": "Time to wait in seconds before taking screenshot",
             "default": 0
           },
-          "viewport_width": {
+          "viewPortWidth": {
             "type": "integer",
-            "description": "Width of the viewport in pixels",
-            "default": 1920
+            "description": "Width of the viewport in pixels (same as width parameter)",
+            "default": 1280
           },
-          "viewport_height": {
+          "viewPortHeight": {
             "type": "integer",
-            "description": "Height of the viewport in pixels",
-            "default": 1080
+            "description": "Height of the viewport in pixels (same as height parameter)",
+            "default": 720
           },
           "response_format": {
             "type": "string",
@@ -386,17 +371,9 @@
       "HtmlImageRequest": {
         "type": "object",
         "required": [
-          "source_type",
           "html_content"
         ],
         "properties": {
-          "source_type": {
-            "type": "string",
-            "enum": [
-              "html"
-            ],
-            "description": "Type of source for image generation"
-          },
           "html_content": {
             "type": "string",
             "description": "HTML content to render as an image"
