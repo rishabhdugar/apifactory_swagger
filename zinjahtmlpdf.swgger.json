@@ -8,7 +8,7 @@
   "servers": [
     {
       "url": "https://api.htmlcsstoimg.com/",
-      "description": "PDFMUNK"
+      "description": "HTML-CSS-TO-IMF"
     }
   ],
   "paths": {
@@ -42,7 +42,7 @@
               "examples": {
                 "URL conversion": {
                   "value": {
-                    "url": "https://pdfmunk.com"
+                    "url": "https://google.com"
                   }
                 },
                 "HTML conversion": {
