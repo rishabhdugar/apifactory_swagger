@@ -8,7 +8,7 @@
   "servers": [
     {
       "url": "https://api.htmlcsstoimg.com/",
-      "description": "HTML-CSS-TO-IMF"
+      "description": "HTML-CSS-TO-IMG"
     }
   ],
   "paths": {
